@@ -6,14 +6,99 @@ and open the template in the editor.
 <html>
     <head>
         <title>Lista e Models</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <script src="js/libs/jquery.js"></script>
+        <script src="js/libs/underscore.js"></script>
         <script src="js/libs/backbone.js-0.9.9-amdjs/backbone-min.js"></script>
         <script src="js/bootstrap.js"></script>
         <link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
         <link rel="stylesheet" type="text/css" href="css/bootstrap-responsive.css"/>
+
+        <script>
+            var App = (function($) {
+                var Tweet = Backbone.Model.extend({
+                    defaults: function() {
+                        return {
+                            author: '',
+                            status: ''
+                        }
+                    }
+
+                });
+
+                var TweetsList = Backbone.Collection.extend({
+                    model: Tweet
+                });
+
+                var tweets = new TweetsList();
+
+                var TweetView = Backbone.View.extend({
+                    model: new Tweet(),
+                    tagName: 'div',
+                    initialize: function(){
+                        this.template = _.template($('#tweet-template').html());
+                    },
+                    render: function(){
+                        this.$el.html(this.template(this.model.toJSON()));
+                        return this;
+                    }
+
+                });
+
+                var TweetsView  = Backbone.View.extend({             
+                    model: tweets,
+                    el: $('#tweets-container'),
+                    initialize: function(){
+                        this.model.on('add',this.render, this);
+                    },
+                    render: function(){
+                        var self = this;
+                        self.$el.html(''),
+                        _.each(this.model.toArray(), function(tweet,i){
+                            self.$el.append((new TweetsView({model: tweet})).render().$el);
+                        });
+                        return this;
+                    }
+                });
+                
+                $(document).ready(function (){
+                    $("#new-tweet").submit(function (ev) {
+                        var tweet = new Tweet({author: $('#author-name').val(), status: $('#status-update').val()});
+                        tweets.add(tweet);
+                        console.log(tweets.toJSON());
+                        return false;
+                    });
+                });
+
+                var appView = new TweetsView();
+
+            })(jQuery);
+        </script>
+        
+        <!--Templates-->
+        <script type="text/template" id="tweet-template">
+            <span class="author"><%= author %>:</span>
+            <span class="status-update"><%= status %>:</span>
+        </script>
     </head>
     <body>
-        <div>Primeira app</div>
+        <div class="container">
+            <form id="new-tweet">
+                <fieldset>
+                    <legend>Backbone App</legend>
+                    <label for="author-name">Autor</label>
+                    <input type="text" id="author-name" name="author-name" class="input-xlarge">
+                    <label for="status-update">Status</label>
+                    <input type="text" id="status-update" name="status-update" class="input-xlarge">
+                    <button class="btn">Postar</button>
+                </fieldset>
+            </form>
+        </div>
+
+        <div id="tweets-container">
+
+        </div>
+
     </body>
 </html>
